@@ -7,14 +7,15 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   name         String
-  email        String   @unique
+  email        String    @unique
   passwordHash String
-  role         Role     @default(USER)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  role         Role      @default(USER)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings     Booking[]
 }
 
 model Hotel {
@@ -31,20 +32,58 @@ model Hotel {
 }
 
 model Room {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   hotelId       String
   type          String
   description   String
   pricePerNight Int
   maxGuests     Int
   totalRooms    Int
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  hotel         Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  hotel         Hotel     @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  bookings      Booking[]
 }
 
 enum Role {
   USER
   ADMIN
+}
+
+model Booking {
+  id String @id @default(uuid())
+  userId String
+  roomId String
+  checkIn  DateTime
+  checkOut DateTime
+  totalPrice Int
+  status     BookingStatus @default(PENDING)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  payment   Payment?
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  bookingId String        @unique
+  amount    Int
+  method    String
+  status    PaymentStatus
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
 }

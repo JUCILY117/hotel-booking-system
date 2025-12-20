@@ -3,7 +3,9 @@ import cors from 'cors';
 import express from 'express';
 
 import authRoutes from './modules/auth/auth.routes.js';
+import bookingRoutes from './modules/bookings/booking.routes.js';
 import hotelRoutes from './modules/hotels/hotel.routes.js';
+import paymentRoutes from './modules/payments/payment.routes.js';
 import roomRoutes from './modules/rooms/room.routes.js';
 
 const app = express();
@@ -23,5 +25,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/hotels', hotelRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
 
 export default app;
