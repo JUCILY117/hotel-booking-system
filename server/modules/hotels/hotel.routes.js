@@ -10,6 +10,9 @@ import {
 import { authenticate } from '../../middlewares/auth.middleware.js';
 import { requireRole } from '../../middlewares/role.middleware.js';
 
+import { uploadHotelImages as upload } from '../../config/upload.js';
+import { uploadHotelImages } from './hotel.controller.js';
+
 const router = Router();
 
 router.get('/', getHotels);
@@ -34,6 +37,14 @@ router.delete(
     authenticate,
     requireRole('ADMIN'),
     deactivateHotel
+);
+
+router.post(
+    '/:id/images',
+    authenticate,
+    requireRole('ADMIN'),
+    upload,
+    uploadHotelImages
 );
 
 export default router;

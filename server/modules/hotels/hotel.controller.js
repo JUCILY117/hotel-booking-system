@@ -90,3 +90,35 @@ export async function deactivateHotel(req, res) {
         return res.status(500).json({ message: 'Internal server error' });
     }
 }
+
+export async function uploadHotelImages(req, res) {
+    try {
+        const { id } = req.params;
+
+        const hotel = await prisma.hotel.findUnique({
+            where: { id },
+        });
+
+        if (!hotel) {
+            return res.status(404).json({ message: 'Hotel not found' });
+        }
+
+        const imagePaths = req.files.map(
+            (file) => `/uploads/hotels/${file.filename}`
+        );
+
+        const updatedHotel = await prisma.hotel.update({
+            where: { id },
+            data: {
+                images: {
+                    push: imagePaths,
+                },
+            },
+        });
+
+        return res.json(updatedHotel);
+    } catch (err) {
+        console.error('Upload hotel images error:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}

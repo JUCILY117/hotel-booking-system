@@ -28,3 +28,4 @@ build/
 # OS
 Thumbs.db
 /generated/prisma
+uploads/

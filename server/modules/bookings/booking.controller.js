@@ -1,4 +1,5 @@
 import prisma from '../../config/prisma.js';
+import { canCancelBooking } from '../../utils/cancellation.util.js';
 import { sendBookingCancellation, sendBookingConfirmation } from '../emails/email.service.js';
 
 export async function createBooking(req, res) {
@@ -105,6 +106,12 @@ export async function cancelBooking(req, res) {
 
         if (booking.status === 'CANCELLED') {
             return res.status(400).json({ message: 'Booking already cancelled' });
+        }
+
+        if (!canCancelBooking(booking)) {
+            return res.status(403).json({
+                message: 'Booking cannot be cancelled as per cancellation policy',
+            });
         }
 
         const updatedBooking = await prisma.booking.update({
