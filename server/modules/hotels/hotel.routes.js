@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import {
+    activateHotel,
     createHotel,
     deactivateHotel,
+    getAllHotelsAdmin,
     getHotelById,
     getHotels,
     updateHotel,
@@ -45,6 +47,20 @@ router.post(
     requireRole('ADMIN'),
     upload,
     uploadHotelImages
+);
+
+router.get(
+    '/admin/all',
+    authenticate,
+    requireRole('ADMIN'),
+    getAllHotelsAdmin
+);
+
+router.patch(
+    '/:id/activate',
+    authenticate,
+    requireRole('ADMIN'),
+    activateHotel
 );
 
 export default router;

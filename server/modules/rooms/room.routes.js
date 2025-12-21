@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import {
+    activateRoom,
     createRoom,
     deactivateRoom,
+    getAllRoomsAdmin,
     getRoomsByHotel,
     updateRoom,
 } from './room.controller.js';
@@ -32,6 +34,20 @@ router.delete(
     authenticate,
     requireRole('ADMIN'),
     deactivateRoom
+);
+
+router.get(
+    '/admin/hotel/:hotelId',
+    authenticate,
+    requireRole('ADMIN'),
+    getAllRoomsAdmin
+);
+
+router.patch(
+    '/:id/activate',
+    authenticate,
+    requireRole('ADMIN'),
+    activateRoom
 );
 
 export default router;

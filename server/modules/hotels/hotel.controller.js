@@ -91,6 +91,35 @@ export async function deactivateHotel(req, res) {
     }
 }
 
+export async function activateHotel(req, res) {
+    try {
+        const { id } = req.params;
+
+        const hotel = await prisma.hotel.update({
+            where: { id },
+            data: { isActive: true },
+        });
+
+        return res.json(hotel);
+    } catch (err) {
+        console.error('Activate hotel error:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+export async function getAllHotelsAdmin(req, res) {
+    try {
+        const hotels = await prisma.hotel.findMany({
+            orderBy: { createdAt: 'desc' },
+        });
+
+        return res.json(hotels);
+    } catch (err) {
+        console.error('Get all hotels error:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 export async function uploadHotelImages(req, res) {
     try {
         const { id } = req.params;

@@ -85,3 +85,31 @@ export async function deactivateRoom(req, res) {
         return res.status(500).json({ message: 'Internal server error' });
     }
 }
+
+export async function activateRoom(req, res) {
+    try {
+        const { id } = req.params;
+
+        const room = await prisma.room.update({
+            where: { id },
+            data: { isActive: true },
+        });
+        return res.json(room);
+    } catch (err) {
+        console.error('Activate room error:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+export async function getAllRoomsAdmin(req, res) {
+    try {
+        const rooms = await prisma.room.findMany({
+            where: { hotelId: req.params.hotelId },
+            orderBy: { createdAt: 'desc' },
+        });
+        return res.json(rooms);
+    } catch (err) {
+        console.error('Get all rooms error:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
