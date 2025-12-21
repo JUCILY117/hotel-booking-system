@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html {
+    font-family: "Poppins", sans-serif;
+    transition: background-color 0.25s ease;
+}
+
+button {
+    cursor: pointer;
+}
+
+.input {
+    @apply px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-700
+         bg-white dark:bg-neutral-900 text-sm
+         focus-within:ring-2 focus-within:ring-blue-500/40;
+}
+
+.btn-secondary {
+    @apply px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-700
+         hover:bg-gray-100 dark:hover:bg-neutral-800 transition;
+}

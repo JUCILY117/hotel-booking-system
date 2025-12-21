@@ -1,7 +1,13 @@
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api/axios";
+import DateField from "../components/DateField";
+import HotelDetailSkeleton from "../components/HotelDetailSkeleton";
+import HotelImageCarousel from "../components/HotelImageCarousel";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { resolveMediaUrl } from "../utils/media";
 
 export default function HotelDetailPage() {
     const { id } = useParams();
@@ -14,7 +20,7 @@ export default function HotelDetailPage() {
     const [checkIn, setCheckIn] = useState("");
     const [checkOut, setCheckOut] = useState("");
     const [availability, setAvailability] = useState({});
-    const [message, setMessage] = useState(null);
+    const toast = useToast();
 
     useEffect(() => {
         Promise.all([api.get(`/hotels/${id}`), api.get(`/rooms/hotel/${id}`)])
@@ -27,13 +33,13 @@ export default function HotelDetailPage() {
 
     const checkRoomAvailability = async roomId => {
         if (!checkIn || !checkOut) {
-            setMessage("Select check-in and check-out dates");
+            toast.info("Select check-in and check-out dates");
             return;
         }
 
-        setMessage(null);
-
-        const res = await api.get(`/bookings/availability/${roomId}`, { params: { checkIn, checkOut } });
+        const res = await api.get(`/bookings/availability/${roomId}`, {
+            params: { checkIn, checkOut },
+        });
 
         setAvailability(prev => ({
             ...prev,
@@ -43,7 +49,7 @@ export default function HotelDetailPage() {
 
     const bookRoom = async roomId => {
         if (!user) {
-            setMessage("Login required to book");
+            toast.error("Login required to book");
             return;
         }
 
@@ -54,90 +60,94 @@ export default function HotelDetailPage() {
                 checkOut,
             });
 
-            const bookingId = res.data.id;
-            window.location.href = `/payment/${bookingId}`;
+            toast.success("Booking created. Redirecting…");
+            window.location.href = `/payment/${res.data.id}`;
         } catch {
-            setMessage("Booking failed");
+            toast.error("Booking failed");
         }
     };
 
-    if (loading) {
-        return <div className="min-h-screen flex items-center justify-center">Loading hotel...</div>;
-    }
+    if (loading) return <HotelDetailSkeleton />;
 
     if (!hotel) {
-        return <div>Hotel not found</div>;
+        return <div className="text-center text-gray-600 dark:text-gray-400 py-20">Hotel not found</div>;
     }
 
+    const images = hotel.images?.map(resolveMediaUrl) || [];
+
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-5xl mx-auto">
-                <h1 className="text-3xl font-semibold mb-2">{hotel.name}</h1>
-                <p className="text-gray-600 mb-4">{hotel.location}</p>
-                <p className="mb-6">{hotel.description}</p>
-
-                {hotel.images?.length > 0 && (
-                    <div className="flex gap-4 mb-6">
-                        {hotel.images.map((img, i) => (
-                            <img
-                                key={i}
-                                src={`http://localhost:5000${img}`}
-                                className="w-48 h-32 object-cover rounded"
-                            />
-                        ))}
-                    </div>
-                )}
-
-                <div className="flex gap-4 mb-6">
-                    <input
-                        type="date"
-                        value={checkIn}
-                        onChange={e => setCheckIn(e.target.value)}
-                        className="border px-3 py-2 rounded"
-                    />
-                    <input
-                        type="date"
-                        value={checkOut}
-                        onChange={e => setCheckOut(e.target.value)}
-                        className="border px-3 py-2 rounded"
-                    />
+        <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 transition-colors">
+            <div className="max-w-6xl mx-auto px-6 py-6 space-y-10">
+                <div>
+                    <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">{hotel.name}</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">{hotel.location}</p>
                 </div>
 
-                {message && <div className="mb-4 text-sm text-blue-600">{message}</div>}
+                {images.length > 0 && <HotelImageCarousel images={images} />}
 
-                <h2 className="text-2xl font-semibold mb-4">Rooms</h2>
+                <p className="text-gray-700 dark:text-gray-300 max-w-3xl">{hotel.description}</p>
 
-                <div className="grid gap-6 sm:grid-cols-2">
-                    {rooms.map(room => {
-                        const avail = availability[room.id];
+                <div className="surface-elevated rounded-2xl border border-gray-200 dark:border-neutral-800 p-5 flex flex-wrap gap-4">
+                    <DateField label="Check-in" value={checkIn} onChange={e => setCheckIn(e.target.value)} />
 
-                        return (
-                            <div key={room.id} className="bg-white border rounded p-4">
-                                <h3 className="font-medium">{room.type}</h3>
-                                <p className="text-sm text-gray-600 mb-2">{room.description}</p>
+                    <DateField label="Check-out" value={checkOut} onChange={e => setCheckOut(e.target.value)} />
 
-                                <p className="text-sm">₹{room.pricePerNight} / night</p>
+                    {/* {message && <p className="w-full text-sm text-blue-600 dark:text-blue-400 mt-2">{message}</p>} */}
+                </div>
 
-                                <button
-                                    onClick={() => checkRoomAvailability(room.id)}
-                                    className="mt-3 text-sm underline"
+                <div>
+                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Available rooms</h2>
+
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        {rooms.map(room => {
+                            const avail = availability[room.id];
+
+                            return (
+                                <motion.div
+                                    key={room.id}
+                                    whileHover={{ y: -4 }}
+                                    className="surface-elevated rounded-2xl border border-gray-200 dark:border-neutral-800 p-5 flex flex-col"
                                 >
-                                    Check availability
-                                </button>
+                                    <h3 className="font-medium text-gray-900 dark:text-gray-100">{room.type}</h3>
 
-                                {avail && <div className="mt-2 text-sm">Available rooms: {avail.availableRooms}</div>}
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex-1">
+                                        {room.description}
+                                    </p>
 
-                                {avail?.isAvailable && (
+                                    <div className="mt-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                        ₹{room.pricePerNight}
+                                        <span className="text-sm font-normal text-gray-500"> / night</span>
+                                    </div>
+
                                     <button
-                                        onClick={() => bookRoom(room.id)}
-                                        className="mt-3 block bg-black text-white px-3 py-2 text-sm rounded"
+                                        onClick={() => checkRoomAvailability(room.id)}
+                                        className="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
                                     >
-                                        Book room
+                                        Check availability
                                     </button>
-                                )}
-                            </div>
-                        );
-                    })}
+
+                                    {avail && (
+                                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                            Available rooms: {avail.availableRooms}
+                                        </p>
+                                    )}
+
+                                    {avail?.isAvailable && (
+                                        <button
+                                            onClick={() => bookRoom(room.id)}
+                                            className="mt-4 w-full rounded-xl py-2.5
+                                 bg-blue-600 text-white font-medium
+                                 hover:bg-blue-700 active:scale-[0.98]
+                                 dark:bg-blue-500 dark:hover:bg-blue-600
+                                 transition"
+                                        >
+                                            Book now
+                                        </button>
+                                    )}
+                                </motion.div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </div>
