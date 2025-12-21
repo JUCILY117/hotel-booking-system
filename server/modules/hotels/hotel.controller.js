@@ -27,15 +27,42 @@ export async function createHotel(req, res) {
 
 export async function getHotels(req, res) {
     try {
-        const hotels = await prisma.hotel.findMany({
-            where: { isActive: true },
-            orderBy: { createdAt: 'desc' },
-        });
+        const page = Math.max(parseInt(req.query.page) || 1, 1);
+        const limit = Math.min(parseInt(req.query.limit) || 6, 50);
+        const skip = (page - 1) * limit;
 
-        return res.json(hotels);
+        const q = req.query.q?.trim();
+
+        const where = {
+            isActive: true,
+            ...(q && {
+                OR: [
+                    { name: { contains: q, mode: "insensitive" } },
+                    { location: { contains: q, mode: "insensitive" } },
+                ],
+            }),
+        };
+
+        const [hotels, total] = await Promise.all([
+            prisma.hotel.findMany({
+                where,
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
+            prisma.hotel.count({ where }),
+        ]);
+
+        return res.json({
+            data: hotels,
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+        });
     } catch (err) {
-        console.error('Get hotels error:', err);
-        return res.status(500).json({ message: 'Internal server error' });
+        console.error("Get hotels error:", err);
+        return res.status(500).json({ message: "Internal server error" });
     }
 }
 
