@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../../middlewares/auth.middleware.js';
 import { makePayment } from './payment.controller.js';
 import {
+    downloadInvoice,
     getAllPayments,
     getMyPayments,
 } from './payment.history.controller.js';
@@ -15,5 +16,6 @@ router.post('/', authenticate, makePayment);
 router.get('/me', authenticate, getMyPayments);
 
 router.get('/admin/all', authenticate, requireRole('ADMIN'), getAllPayments);
+router.get('/:paymentId/invoice', authenticate, downloadInvoice);
 
 export default router;

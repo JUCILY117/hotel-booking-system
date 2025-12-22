@@ -79,6 +79,7 @@ model Payment {
   bookingId String        @unique
   amount    Int
   method    String
+  cardBrand String?
   status    PaymentStatus
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

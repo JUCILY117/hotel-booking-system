@@ -1,4 +1,5 @@
 import prisma from '../../config/prisma.js';
+import { generateInvoicePdf } from '../../utils/invoicePdf.util.js';
 
 export async function getMyPayments(req, res) {
     try {
@@ -51,5 +52,39 @@ export async function getAllPayments(req, res) {
     } catch (err) {
         console.error('Admin get payments error:', err);
         return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+export async function downloadInvoice(req, res) {
+    try {
+        const payment = await prisma.payment.findFirst({
+            where: {
+                id: req.params.paymentId,
+                booking: {
+                    userId: req.user.id, // security
+                },
+            },
+            include: {
+                booking: {
+                    include: {
+                        user: true,
+                        room: {
+                            include: {
+                                hotel: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!payment) {
+            return res.status(404).json({ message: "Invoice not found" });
+        }
+
+        generateInvoicePdf(res, payment);
+    } catch (err) {
+        console.error("Invoice generation error:", err);
+        res.status(500).json({ message: "Failed to generate invoice" });
     }
 }

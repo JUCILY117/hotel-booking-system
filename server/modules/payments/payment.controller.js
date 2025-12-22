@@ -7,7 +7,7 @@ import {
 export async function makePayment(req, res) {
     try {
         const userId = req.user.id;
-        const { bookingId, method } = req.body;
+        const { bookingId, method, cardBrand } = req.body;
 
         if (!bookingId || !method) {
             return res.status(400).json({ message: 'Missing payment details' });
@@ -40,6 +40,7 @@ export async function makePayment(req, res) {
                 bookingId,
                 amount: booking.totalPrice,
                 method,
+                cardBrand: method === "CARD" ? cardBrand : null,
                 status: isSuccess ? 'SUCCESS' : 'FAILED',
             },
         });
