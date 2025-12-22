@@ -46,15 +46,30 @@ function baseTemplate({ title, accent, content, footer }) {
 
             <!-- Footer -->
             <tr>
-              <td style="padding:22px;
+              <td style="
+                padding:22px;
                 text-align:center;
                 font-size:12px;
                 color:${BRAND.muted};
-                border-top:1px solid ${BRAND.border};">
-                ${footer || `© ${new Date().getFullYear()} ${BRAND.name}. All rights reserved.`}
+                border-top:1px solid ${BRAND.border};
+              ">
+                <p style="margin:0 0 6px;">
+                  © ${new Date().getFullYear()} ${BRAND.name}. All rights reserved.
+                </p>
+
+                <p style="margin:0 0 6px;">
+                  This invoice was generated automatically. No signature required.
+                </p>
+
+                <p style="margin:0;">
+                  Need help? 
+                  <a href="mailto:support@ezymotel.in"
+                    style="color:${BRAND.primary};text-decoration:none;">
+                    support@ezymotel.in
+                  </a>
+                </p>
               </td>
             </tr>
-
           </table>
         </td>
       </tr>
@@ -135,7 +150,36 @@ export function bookingCancellationTemplate(booking) {
   });
 }
 
+function formatPaymentMethod(payment) {
+  if (payment.method === "CARD" && payment.cardBrand) {
+    return `Card (${payment.cardBrand})`;
+  }
+  if (payment.method === "UPI") {
+    return "UPI";
+  }
+  if (payment.method === "PAYPAL") {
+    return "PayPal";
+  }
+  return payment.method;
+}
+
+function paymentLogo(payment) {
+  if (payment.method === "CARD" && payment.cardBrand) {
+    return `https://img.icons8.com/color/48/${payment.cardBrand.toLowerCase()}.png`;
+  }
+  if (payment.method === "UPI") {
+    return "https://img.icons8.com/color/48/bhim.png";
+  }
+  if (payment.method === "PAYPAL") {
+    return "https://img.icons8.com/color/48/paypal.png";
+  }
+  return null;
+}
+
 export function paymentSuccessTemplate(booking, payment) {
+  const methodLabel = formatPaymentMethod(payment);
+  const logo = paymentLogo(payment);
+
   return baseTemplate({
     title: "Payment Successful ✅",
     accent: BRAND.success,
@@ -143,6 +187,12 @@ export function paymentSuccessTemplate(booking, payment) {
       <p>
         Your payment was successful and your booking is now confirmed.
       </p>
+
+      ${logo ? `
+        <div style="text-align:center;margin:14px 0;">
+          <img src="${logo}" height="36" alt="${methodLabel}" />
+        </div>
+      ` : ""}
 
       ${infoCard([
       { label: "Hotel", value: booking.room.hotel.name },
@@ -152,7 +202,8 @@ export function paymentSuccessTemplate(booking, payment) {
         value: `${booking.checkIn.toDateString()} → ${booking.checkOut.toDateString()}`,
       },
       { label: "Amount Paid", value: `₹${payment.amount}` },
-      { label: "Payment Method", value: payment.method },
+      { label: "Payment Method", value: methodLabel },
+      { label: "Payment Status", value: "SUCCESS" },
     ])}
 
       <p style="color:${BRAND.muted};">
@@ -161,6 +212,7 @@ export function paymentSuccessTemplate(booking, payment) {
     `,
   });
 }
+
 
 export function paymentFailureTemplate(booking) {
   return baseTemplate({

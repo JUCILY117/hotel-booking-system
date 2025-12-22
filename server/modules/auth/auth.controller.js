@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import prisma from '../../config/prisma.js';
 import { generateAccessToken } from '../../utils/token.util.js';
+import { sendSignupWelcome } from '../emails/email.service.js';
 
 export async function register(req, res) {
     try {
@@ -27,6 +28,8 @@ export async function register(req, res) {
                 passwordHash,
             },
         });
+
+        await sendSignupWelcome(email, user);
 
         return res.status(201).json({
             message: 'User registered successfully',

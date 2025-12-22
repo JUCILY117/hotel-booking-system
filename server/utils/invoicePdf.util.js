@@ -34,7 +34,7 @@ export function generateInvoicePdf(res, payment) {
     doc
         .font("Poppins-Bold")
         .fontSize(16)
-        .text("Ezy Hotel", MARGIN + 60, headerY + 12);
+        .text("Ezy Motel", MARGIN + 60, headerY + 12);
 
     doc
         .font("Poppins-Bold")
@@ -153,7 +153,7 @@ export function generateInvoicePdf(res, payment) {
         .fontSize(9)
         .fillColor("gray")
         .text(
-            "This is a system generated invoice by Ezy Hotel. No signature required.",
+            "This is a system generated invoice by Ezy Motel. No signature required.",
             MARGIN,
             doc.y,
             {
