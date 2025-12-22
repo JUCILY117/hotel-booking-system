@@ -1,17 +1,20 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
+import AccountLayout from "./components/account/AccountLayout";
 import AdminLayout from "./components/admin/AdminLayout";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MyBookingsTab from "./pages/account/MyBookingsTab";
+import MyPaymentsTab from "./pages/account/MyPaymentsTab";
 import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import AdminBookingsPage from "./pages/admin/AdminBookingsPage";
 import AdminCreateHotel from "./pages/admin/AdminCreateHotel";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminHotelsPage from "./pages/admin/AdminHotelsPage";
+import AdminPaymentsPage from "./pages/admin/AdminPaymentsPage";
 import AdminRoomsPage from "./pages/admin/AdminRoomsPage";
 import HotelDetailPage from "./pages/HotelDetailPage";
 import HotelsPage from "./pages/HotelsPage";
 import LoginPage from "./pages/LoginPage";
-import MyBookingsPage from "./pages/MyBookingsPage";
 import PaymentPage from "./pages/PaymentPage";
 import RegisterPage from "./pages/RegisterPage";
 
@@ -24,7 +27,18 @@ export default function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/payment/:bookingId" element={<PaymentPage />} />
-                <Route path="/bookings" element={<MyBookingsPage />} />
+                <Route
+                    path="/account"
+                    element={
+                        <ProtectedRoute>
+                            <AccountLayout />
+                        </ProtectedRoute>
+                    }
+                >
+                    <Route index element={<Navigate to="bookings" replace />} />
+                    <Route path="bookings" element={<MyBookingsTab />} />
+                    <Route path="payments" element={<MyPaymentsTab />} />
+                </Route>
                 <Route
                     path="/admin"
                     element={
@@ -38,6 +52,7 @@ export default function App() {
                     <Route path="hotels/new" element={<AdminCreateHotel />} />
                     <Route path="hotels/:hotelId" element={<AdminRoomsPage />} />
                     <Route path="bookings" element={<AdminBookingsPage />} />
+                    <Route path="payments" element={<AdminPaymentsPage />} />
                     <Route path="analytics" element={<AdminAnalyticsPage />} />
                 </Route>
             </Routes>

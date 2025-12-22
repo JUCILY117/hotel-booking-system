@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CalendarCheck, LogOut, Shield } from "lucide-react";
+import { LogOut, Shield, UserRound } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
@@ -19,8 +19,8 @@ export default function Layout({ children }) {
                     <div className="flex items-center gap-2 text-sm">
                         {user && (
                             <>
-                                <NavItem to="/bookings" icon={CalendarCheck}>
-                                    My bookings
+                                <NavItem to="/account" icon={UserRound}>
+                                    My account
                                 </NavItem>
 
                                 {user.role === "ADMIN" && (
