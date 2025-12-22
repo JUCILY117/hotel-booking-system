@@ -5,11 +5,17 @@ import fs from "fs/promises";
 import path from "path";
 import prisma from "../config/prisma.js";
 
+const BRAND_NAME = "EzyMotel";
+const BRAND_DOMAIN = "ezymotel.in";
+
 const UNSPLASH_URL = "https://api.unsplash.com/search/photos";
 const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
 
 const UPLOAD_BASE = path.resolve("uploads/hotels");
 const PLACEHOLDER_IMAGE = "/uploads/hotels/placeholder.jpg";
+
+const PAYMENT_METHODS = ["CARD", "UPI", "PAYPAL"];
+const CARD_BRANDS = ["VISA", "MASTERCARD", "AMEX"];
 
 const client = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -52,33 +58,95 @@ const hotelSchema = {
     }
 };
 
-async function generateHotels(count = 45) {
+async function generateHotelBatch(count, attempt = 1) {
+    const MAX_ATTEMPTS = 5;
+
+    console.log(`🧠 Gemini: generating ${count} hotels (attempt ${attempt}/${MAX_ATTEMPTS})`);
+
     const prompt = `
-Generate ${count} unique hotels.
+Generate ${count} unique hotels for a premium hotel booking platform called "${BRAND_NAME}".
+
 Each hotel must include:
 - name
 - category (boutique, resort, business, heritage)
-- tagline (short)
+- tagline (short and premium)
 - realistic city and country
-- premium description
-- amenities
+- professional, high-quality description suitable for ${BRAND_NAME}
+- amenities list
 - room descriptions for Standard, Deluxe, Suite, Family
 `;
 
-    const res = await client.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: hotelSchema,
-        },
-    });
+    try {
+        const res = await client.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: hotelSchema,
+            },
+        });
 
-    return JSON.parse(res.text);
+        const data = JSON.parse(res.text);
+
+        if (!Array.isArray(data) || data.length === 0) {
+            throw new Error("Gemini returned empty hotel batch");
+        }
+
+        console.log(`✓ Gemini batch received (${data.length})`);
+        return data;
+
+    } catch (err) {
+        const status = err?.status || err?.error?.code;
+
+        if (
+            attempt < MAX_ATTEMPTS &&
+            (status === 503 || status === 429 || status === "UNAVAILABLE")
+        ) {
+            const delay = Math.min(60_000, 5_000 * attempt);
+
+            console.warn(
+                `⚠️ Gemini overloaded (status ${status}). Retrying in ${delay / 1000}s...`
+            );
+
+            await new Promise(res => setTimeout(res, delay));
+            return generateHotelBatch(count, attempt + 1);
+        }
+
+        throw err;
+    }
+}
+
+
+async function generateHotels(totalCount = 45, batchSize = 5) {
+    console.log(`🏨 Generating ${totalCount} hotels in batches of ${batchSize}`);
+
+    const results = [];
+
+    while (results.length < totalCount) {
+        const remaining = totalCount - results.length;
+        const currentBatchSize = Math.min(batchSize, remaining);
+
+        console.log(
+            `→ Batch ${results.length / batchSize + 1}: hotels ${results.length + 1}–${results.length + currentBatchSize}`
+        );
+
+        const batch = await generateHotelBatch(currentBatchSize);
+        results.push(...batch);
+
+        if (results.length < totalCount) {
+            console.log("⏳ Waiting for free-tier rate limit...");
+            await new Promise(res => setTimeout(res, 65_000));
+        }
+    }
+
+    console.log(`✓ Total hotels generated: ${results.length}`);
+    return results;
 }
 
 const rand = (min, max) =>
     Math.floor(Math.random() * (max - min + 1)) + min;
+
+const randomItem = arr => arr[rand(0, arr.length - 1)];
 
 const addDays = (date, days) => {
     const d = new Date(date);
@@ -89,14 +157,11 @@ const addDays = (date, days) => {
 async function fetchUnsplashImages(query, count = 4) {
     const res = await fetch(
         `${UNSPLASH_URL}?query=${encodeURIComponent(query)}&per_page=${count}`,
-        {
-            headers: {
-                Authorization: `Client-ID ${UNSPLASH_KEY}`,
-            },
-        }
+        { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } }
     );
 
     if (!res.ok) throw new Error("Unsplash fetch failed");
+
     const data = await res.json();
     return data.results.map(r => r.urls.regular);
 }
@@ -113,11 +178,11 @@ async function downloadImages(urls, hotelId) {
             const buffer = Buffer.from(await res.arrayBuffer());
 
             const fileName = `image-${i + 1}.jpg`;
-            const filePath = path.join(dir, fileName);
+            await fs.writeFile(path.join(dir, fileName), buffer);
 
-            await fs.writeFile(filePath, buffer);
             saved.push(`/uploads/hotels/${hotelId}/${fileName}`);
         } catch {
+            console.warn(`⚠️ Image download failed for hotel ${hotelId}, using placeholder`);
             saved.push(PLACEHOLDER_IMAGE);
         }
     }
@@ -126,7 +191,7 @@ async function downloadImages(urls, hotelId) {
 }
 
 async function seed() {
-    console.log("Seeding database");
+    console.log("🌱 Seeding database started");
 
     await prisma.payment.deleteMany();
     await prisma.booking.deleteMany();
@@ -134,8 +199,9 @@ async function seed() {
     await prisma.hotel.deleteMany();
     await prisma.user.deleteMany();
 
-    const adminHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+    console.log("🧹 Database cleared");
 
+    const adminHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
     await prisma.user.create({
         data: {
             name: "Admin",
@@ -144,6 +210,7 @@ async function seed() {
             role: "ADMIN",
         },
     });
+    console.log("👑 Admin created");
 
     const userHash = await bcrypt.hash("password123", 10);
     const users = [];
@@ -153,17 +220,23 @@ async function seed() {
             await prisma.user.create({
                 data: {
                     name: `User ${i}`,
-                    email: `user${i}@stayease.com`,
+                    email: `user${i}@${BRAND_DOMAIN}`,
                     passwordHash: userHash,
                     role: "USER",
                 },
             })
         );
     }
+    console.log(`👤 Users created: ${users.length}`);
 
     const aiHotels = await generateHotels();
 
+    console.log("🏗 Creating hotels, rooms & images");
+
+    let hotelIndex = 1;
     for (const aiHotel of aiHotels) {
+        console.log(`→ Hotel ${hotelIndex++}: ${aiHotel.name}`);
+
         const hotel = await prisma.hotel.create({
             data: {
                 name: aiHotel.name,
@@ -188,14 +261,12 @@ async function seed() {
 
         const basePrice = rand(2500, 6000);
 
-        const roomTypes = [
+        for (const r of [
             { type: "Standard", mul: 1, guests: 2 },
             { type: "Deluxe", mul: 1.4, guests: 2 },
             { type: "Suite", mul: 2, guests: 3 },
             { type: "Family", mul: 1.6, guests: 4 },
-        ];
-
-        for (const r of roomTypes) {
+        ]) {
             await prisma.room.create({
                 data: {
                     hotelId: hotel.id,
@@ -210,17 +281,18 @@ async function seed() {
         }
     }
 
-    const rooms = await prisma.room.findMany({ where: { isActive: true } });
+    console.log("🛏 Rooms created");
 
-    for (let i = 0; i < 8; i++) {
-        const user = users[rand(0, users.length - 1)];
-        const room = rooms[rand(0, rooms.length - 1)];
+    const rooms = await prisma.room.findMany({ where: { isActive: true } });
+    console.log(`📦 Active rooms available for booking: ${rooms.length}`);
+
+    for (let i = 1; i <= 8; i++) {
+        const user = randomItem(users);
+        const room = randomItem(rooms);
 
         const checkIn = addDays(new Date(), rand(-10, 5));
         const checkOut = addDays(checkIn, rand(1, 4));
-
-        const nights =
-            (checkOut - checkIn) / (1000 * 60 * 60 * 24);
+        const nights = (checkOut - checkIn) / 86400000;
 
         const booking = await prisma.booking.create({
             data: {
@@ -233,22 +305,27 @@ async function seed() {
             },
         });
 
+        const method = randomItem(PAYMENT_METHODS);
+
         await prisma.payment.create({
             data: {
                 bookingId: booking.id,
                 amount: booking.totalPrice,
-                method: "CARD",
+                method,
+                cardBrand: method === "CARD" ? randomItem(CARD_BRANDS) : null,
                 status: "SUCCESS",
             },
         });
+
+        console.log(`💳 Booking ${i}/8 created`);
     }
 
-    console.log("Seed completed successfully");
+    console.log("🎉 Seed completed successfully");
 }
 
 seed()
     .catch(err => {
-        console.error("Seed failed:", err);
+        console.error("❌ Seed failed:", err);
     })
     .finally(async () => {
         await prisma.$disconnect();
