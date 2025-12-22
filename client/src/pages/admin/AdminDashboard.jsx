@@ -1,12 +1,15 @@
 import { motion } from "framer-motion";
-import { CalendarCheck, CheckCircle2, Clock, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CalendarCheck, CheckCircle2, ChevronLeft, ChevronRight, Clock, XCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../api/axios";
+
+const PAGE_SIZE = 5;
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
 
     useEffect(() => {
         Promise.all([api.get("/admin/analytics/dashboard"), api.get("/bookings/admin/all")])
@@ -16,6 +19,17 @@ export default function AdminDashboard() {
             })
             .finally(() => setLoading(false));
     }, []);
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [page]);
+
+    const totalPages = Math.ceil(bookings.length / PAGE_SIZE);
+
+    const paginatedBookings = useMemo(() => {
+        const start = (page - 1) * PAGE_SIZE;
+        return bookings.slice(start, start + PAGE_SIZE);
+    }, [bookings, page]);
 
     if (loading) {
         return <div className="flex items-center justify-center py-20 text-gray-500">Loading dashboard…</div>;
@@ -55,7 +69,7 @@ export default function AdminDashboard() {
                         </thead>
 
                         <tbody>
-                            {bookings.map(b => (
+                            {paginatedBookings.map(b => (
                                 <tr
                                     key={b.id}
                                     className="border-b last:border-0 border-gray-200 dark:border-neutral-800"
@@ -72,6 +86,30 @@ export default function AdminDashboard() {
                         </tbody>
                     </table>
                 </div>
+
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-4 py-4">
+                        <button
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-white/10 dark:text-gray-400 dark:hover:bg-neutral-800"
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Page {page} of {totalPages}
+                        </span>
+
+                        <button
+                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            disabled={page === totalPages}
+                            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-white/10 dark:text-gray-400 dark:hover:bg-neutral-800"
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

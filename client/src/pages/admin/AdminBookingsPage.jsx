@@ -1,10 +1,21 @@
 import { motion } from "framer-motion";
-import { Calendar, CheckCircle2, IndianRupee, Loader2, Mail, MapPin, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+    Calendar,
+    CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
+    IndianRupee,
+    Loader2,
+    Mail,
+    MapPin,
+    XCircle,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../api/axios";
 import { useToast } from "../../context/ToastContext";
 
 const STATUSES = ["ALL", "PENDING", "CONFIRMED", "CANCELLED"];
+const PAGE_SIZE = 3;
 
 export default function AdminBookingsPage() {
     const toast = useToast();
@@ -13,6 +24,7 @@ export default function AdminBookingsPage() {
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState("ALL");
     const [actionId, setActionId] = useState(null);
+    const [page, setPage] = useState(1);
 
     const fetchBookings = async () => {
         setLoading(true);
@@ -21,6 +33,7 @@ export default function AdminBookingsPage() {
                 params: status !== "ALL" ? { status } : {},
             });
             setBookings(res.data);
+            setPage(1); // reset pagination on filter change
         } catch {
             toast.error("Failed to load bookings");
         } finally {
@@ -31,6 +44,10 @@ export default function AdminBookingsPage() {
     useEffect(() => {
         fetchBookings();
     }, [status]);
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [page]);
 
     const confirmBooking = async id => {
         setActionId(id);
@@ -58,6 +75,13 @@ export default function AdminBookingsPage() {
         }
     };
 
+    const totalPages = Math.ceil(bookings.length / PAGE_SIZE);
+
+    const paginatedBookings = useMemo(() => {
+        const start = (page - 1) * PAGE_SIZE;
+        return bookings.slice(start, start + PAGE_SIZE);
+    }, [bookings, page]);
+
     if (loading) {
         return (
             <div className="py-24 flex justify-center">
@@ -79,24 +103,24 @@ export default function AdminBookingsPage() {
                         key={s}
                         onClick={() => setStatus(s)}
                         className={`
-              px-3 py-1.5 rounded-full text-sm font-medium transition
-              ${
-                  status === s
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-700"
-              }
-            `}
+                            px-3 py-1.5 rounded-full text-sm font-medium transition
+                            ${
+                                status === s
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-700"
+                            }
+                        `}
                     >
                         {s}
                     </button>
                 ))}
             </div>
 
-            {bookings.length === 0 ? (
+            {paginatedBookings.length === 0 ? (
                 <div className="py-20 text-center text-gray-600 dark:text-gray-400">No bookings found</div>
             ) : (
                 <div className="space-y-4">
-                    {bookings.map(booking => {
+                    {paginatedBookings.map(booking => {
                         const nights = (new Date(booking.checkOut) - new Date(booking.checkIn)) / (1000 * 60 * 60 * 24);
 
                         const pending = booking.status === "PENDING";
@@ -107,10 +131,10 @@ export default function AdminBookingsPage() {
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="
-                  surface-elevated rounded-2xl
-                  border border-gray-200 dark:border-neutral-800
-                  p-5
-                "
+                                    surface-elevated rounded-2xl
+                                    border border-gray-200 dark:border-neutral-800
+                                    p-5
+                                "
                             >
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
@@ -144,13 +168,13 @@ export default function AdminBookingsPage() {
                                             disabled={actionId === booking.id}
                                             onClick={() => confirmBooking(booking.id)}
                                             className="
-                        inline-flex items-center gap-2
-                        rounded-md px-3 py-1.5
-                        text-sm font-medium
-                        text-green-600 dark:text-green-400
-                        hover:bg-green-50 dark:hover:bg-green-900/20
-                        transition
-                      "
+                                                inline-flex items-center gap-2
+                                                rounded-md px-3 py-1.5
+                                                text-sm font-medium
+                                                text-green-600 dark:text-green-400
+                                                hover:bg-green-50 dark:hover:bg-green-900/20
+                                                transition
+                                            "
                                         >
                                             {actionId === booking.id ? (
                                                 <Loader2 size={14} className="animate-spin" />
@@ -166,13 +190,13 @@ export default function AdminBookingsPage() {
                                             disabled={actionId === booking.id}
                                             onClick={() => cancelBooking(booking.id)}
                                             className="
-                        inline-flex items-center gap-2
-                        rounded-md px-3 py-1.5
-                        text-sm font-medium
-                        text-red-600 dark:text-red-400
-                        hover:bg-red-50 dark:hover:bg-red-900/20
-                        transition
-                      "
+                                                inline-flex items-center gap-2
+                                                rounded-md px-3 py-1.5
+                                                text-sm font-medium
+                                                text-red-600 dark:text-red-400
+                                                hover:bg-red-50 dark:hover:bg-red-900/20
+                                                transition
+                                            "
                                         >
                                             {actionId === booking.id ? (
                                                 <Loader2 size={14} className="animate-spin" />
@@ -186,6 +210,48 @@ export default function AdminBookingsPage() {
                             </motion.div>
                         );
                     })}
+                </div>
+            )}
+
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 pt-4">
+                    <button
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="
+                            p-2 rounded-lg
+                            border border-gray-200
+                            text-gray-600
+                            hover:bg-gray-50
+                            disabled:opacity-40
+                            dark:border-white/10
+                            dark:text-gray-400
+                            dark:hover:bg-neutral-800
+                        "
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Page {page} of {totalPages}
+                    </span>
+
+                    <button
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="
+                            p-2 rounded-lg
+                            border border-gray-200
+                            text-gray-600
+                            hover:bg-gray-50
+                            disabled:opacity-40
+                            dark:border-white/10
+                            dark:text-gray-400
+                            dark:hover:bg-neutral-800
+                        "
+                    >
+                        <ChevronRight size={16} />
+                    </button>
                 </div>
             )}
         </div>

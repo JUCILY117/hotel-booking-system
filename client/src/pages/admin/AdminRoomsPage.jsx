@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
-import { BedDouble, IndianRupee, Plus, Power, Users, Warehouse } from "lucide-react";
-import { useEffect, useState } from "react";
+import { BedDouble, ChevronLeft, ChevronRight, IndianRupee, Plus, Power, Users, Warehouse } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../../api/axios";
 import { useToast } from "../../context/ToastContext";
+
+const PAGE_SIZE = 2;
 
 export default function AdminRoomsPage() {
     const { hotelId } = useParams();
@@ -11,6 +13,7 @@ export default function AdminRoomsPage() {
 
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
 
     const [form, setForm] = useState({
         type: "",
@@ -30,6 +33,17 @@ export default function AdminRoomsPage() {
     useEffect(() => {
         fetchRooms();
     }, [hotelId]);
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [page]);
+
+    const totalPages = Math.ceil(rooms.length / PAGE_SIZE);
+
+    const paginatedRooms = useMemo(() => {
+        const start = (page - 1) * PAGE_SIZE;
+        return rooms.slice(start, start + PAGE_SIZE);
+    }, [rooms, page]);
 
     const createRoom = async e => {
         e.preventDefault();
@@ -83,11 +97,7 @@ export default function AdminRoomsPage() {
 
             <form
                 onSubmit={createRoom}
-                className="
-          surface-elevated rounded-2xl
-          border border-gray-200 dark:border-neutral-800
-          p-5 space-y-4
-        "
+                className="surface-elevated rounded-2xl border border-gray-200 dark:border-neutral-800 p-5 space-y-4"
             >
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Add new room</h2>
 
@@ -130,31 +140,19 @@ export default function AdminRoomsPage() {
                     onChange={v => setForm({ ...form, description: v })}
                 />
 
-                <button
-                    className="
-            inline-flex items-center gap-2
-            rounded-xl px-4 py-2
-            bg-blue-600 text-white text-sm font-medium
-            hover:bg-blue-700 active:scale-[0.98]
-            transition
-          "
-                >
+                <button className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 active:scale-[0.98] transition">
                     <Plus size={16} />
                     Add room
                 </button>
             </form>
 
             <div className="space-y-4">
-                {rooms.map(room => (
+                {paginatedRooms.map(room => (
                     <motion.div
                         key={room.id}
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="
-              surface-elevated rounded-2xl
-              border border-gray-200 dark:border-neutral-800
-              p-5
-            "
+                        className="surface-elevated rounded-2xl border border-gray-200 dark:border-neutral-800 p-5"
                     >
                         <div className="flex items-start justify-between gap-4">
                             <div className="space-y-1">
@@ -174,16 +172,11 @@ export default function AdminRoomsPage() {
 
                             <button
                                 onClick={() => toggleRoom(room)}
-                                className={`
-                  inline-flex items-center gap-1.5
-                  rounded-md px-3 py-1.5 text-sm font-medium
-                  transition
-                  ${
-                      room.isActive
-                          ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          : "text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-                  }
-                `}
+                                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                                    room.isActive
+                                        ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                        : "text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                }`}
                             >
                                 <Power size={14} />
                                 {room.isActive ? "Deactivate" : "Activate"}
@@ -192,6 +185,30 @@ export default function AdminRoomsPage() {
                     </motion.div>
                 ))}
             </div>
+
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 pt-4">
+                    <button
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-white/10 dark:text-gray-400 dark:hover:bg-neutral-800"
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Page {page} of {totalPages}
+                    </span>
+
+                    <button
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 dark:border-white/10 dark:text-gray-400 dark:hover:bg-neutral-800"
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
@@ -215,14 +232,11 @@ function Field({ icon: Icon, value, onChange, placeholder, type = "text" }) {
 function StatusBadge({ active }) {
     return (
         <span
-            className={`
-        px-2 py-0.5 rounded-full text-xs font-medium
-        ${
-            active
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : "bg-gray-200 text-gray-600 dark:bg-neutral-800 dark:text-gray-400"
-        }
-      `}
+            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                active
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    : "bg-gray-200 text-gray-600 dark:bg-neutral-800 dark:text-gray-400"
+            }`}
         >
             {active ? "Active" : "Inactive"}
         </span>
