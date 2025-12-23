@@ -111,6 +111,10 @@ export function generateInvoicePdf(res, payment) {
         AMEX: "amex.png",
         UPI: "upi.png",
         PAYPAL: "paypal.png",
+        DISCOVER: "discover.png",
+        DINERS: "diners.png",
+        JCB: "jcb.png",
+        UNIONPAY: "unionpay.png",
     };
 
     const iconKey =
