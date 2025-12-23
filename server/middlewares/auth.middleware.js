@@ -4,6 +4,7 @@ import { generateAccessToken, verifyAccessToken, verifyRefreshToken } from '../u
 export async function authenticate(req, res, next) {
     const accessToken = req.cookies?.access_token;
     const refreshToken = req.cookies?.refresh_token;
+    const isProduction = process.env.NODE_ENV === 'production';
 
     if (!accessToken) {
         if (!refreshToken) {
@@ -20,8 +21,8 @@ export async function authenticate(req, res, next) {
             const newAccessToken = generateAccessToken(user);
             res.cookie('access_token', newAccessToken, {
                 httpOnly: true,
-                sameSite: 'lax',
-                secure: false,
+                sameSite: isProduction ? 'None' : 'Lax',
+                secure: isProduction,
                 maxAge: 15 * 60 * 1000,
             });
 
@@ -51,8 +52,8 @@ export async function authenticate(req, res, next) {
             const newAccessToken = generateAccessToken(user);
             res.cookie('access_token', newAccessToken, {
                 httpOnly: true,
-                sameSite: 'lax',
-                secure: false,
+                sameSite: isProduction ? 'None' : 'Lax',
+                secure: isProduction,
                 maxAge: 15 * 60 * 1000,
             });
 

@@ -8,16 +8,21 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  name         String
-  email        String    @unique
-  passwordHash String
-  role         Role      @default(USER)
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  bookings     Booking[]
-  refreshToken String?
+  id                       String    @id @default(uuid())
+  name                     String
+  email                    String    @unique
+  passwordHash             String
+  role                     Role      @default(USER)
+  isActive                 Boolean   @default(true)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  bookings                 Booking[]
+  refreshToken             String?
+  passwordResetToken       String?
+  passwordResetExpires     DateTime?
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+  isEmailVerified          Boolean   @default(false)
 }
 
 model Hotel {
@@ -54,18 +59,18 @@ enum Role {
 }
 
 model Booking {
-  id String @id @default(uuid())
-  userId String
-  roomId String
-  checkIn  DateTime
-  checkOut DateTime
+  id         String        @id @default(uuid())
+  userId     String
+  roomId     String
+  checkIn    DateTime
+  checkOut   DateTime
   totalPrice Int
   status     BookingStatus @default(PENDING)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  payment   Payment?
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room       Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  payment    Payment?
 }
 
 enum BookingStatus {
@@ -82,8 +87,8 @@ model Payment {
   method    String
   cardBrand String?
   status    PaymentStatus
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  booking   Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
 }
 
 enum PaymentStatus {

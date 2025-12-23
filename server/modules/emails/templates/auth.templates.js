@@ -162,3 +162,76 @@ export function emailVerificationTemplate(user, verifyUrl) {
     `,
   });
 }
+
+export function passwordResetTemplate(resetUrl) {
+  return baseTemplate({
+    title: "Password Reset",
+    accent: BRAND.danger,
+    content: `
+      <p>
+        Hello,
+      </p>
+
+      <p>
+        We received a request to reset your password for your ${BRAND.name} account.
+        You can reset your password using the link below.
+      </p>
+
+      ${infoCard([
+      { label: "Action", value: "Reset Password" },
+      { label: "Link Validity", value: "30 minutes" },
+    ])}
+
+      <p style="margin:24px 0;">
+        <a href="${resetUrl}"
+          style="color:${BRAND.danger};text-decoration:none;font-weight:600;">
+          Reset your password
+        </a>
+      </p>
+
+      <p style="color:${BRAND.muted};font-size:13px;">
+        If you did not request a password reset, you can safely ignore this email.
+        Your account will remain secure.
+      </p>
+    `,
+  });
+}
+
+export function passwordResetSuccessTemplate(user) {
+  return baseTemplate({
+    title: "Password Updated",
+    accent: BRAND.success,
+    content: `
+      <p>
+        Hello ${user.name || "there"},
+      </p>
+
+      <p>
+        Your password for your ${BRAND.name} account has been successfully updated.
+      </p>
+
+      ${infoCard([
+      { label: "Account Email", value: user.email },
+      { label: "IP Address", value: user.ipAddress || "Unknown" },
+      { label: "Device", value: user.userAgent || "Unknown" },
+      { label: "Time", value: new Date().toLocaleString() },
+    ])}
+
+      <p style="margin:24px 0;">
+        If this was you, no further action is required.
+      </p>
+
+      <p style="color:${BRAND.danger};font-size:13px;">
+        If you do not recognize this activity, please reset your password
+        immediately or contact support.
+      </p>
+
+      <p style="margin-top:24px;">
+        <a href="${process.env.CLIENT_URL}/login"
+          style="color:${BRAND.primary};text-decoration:none;font-weight:500;">
+          Secure my account
+        </a>
+      </p>
+    `,
+  });
+}

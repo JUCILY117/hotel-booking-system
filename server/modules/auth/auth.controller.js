@@ -3,6 +3,8 @@ import prisma from '../../config/prisma.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../utils/token.util.js';
 import { sendSignupWelcome } from '../emails/email.service.js';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export async function register(req, res) {
     try {
         const { name, email, password } = req.body;
@@ -46,8 +48,8 @@ export async function login(req, res) {
 
         await prisma.user.update({ where: { id: user.id }, data: { refreshToken } });
 
-        res.cookie('access_token', accessToken, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 15 * 60 * 1000 });
-        res.cookie('refresh_token', refreshToken, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie('access_token', accessToken, { httpOnly: true, sameSite: isProduction ? 'None' : 'Lax', secure: isProduction, maxAge: 15 * 60 * 1000 });
+        res.cookie('refresh_token', refreshToken, { httpOnly: true, sameSite: isProduction ? 'None' : 'Lax', secure: isProduction, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
         return res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role } });
     } catch (err) {
@@ -62,8 +64,8 @@ export async function logout(req, res) {
             await prisma.user.update({ where: { id: req.user.id }, data: { refreshToken: null } });
         }
 
-        res.clearCookie('access_token', { httpOnly: true, sameSite: 'lax', secure: false });
-        res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'lax', secure: false });
+        res.clearCookie('access_token', { httpOnly: true, sameSite: isProduction ? 'None' : 'Lax', secure: isProduction });
+        res.clearCookie('refresh_token', { httpOnly: true, sameSite: isProduction ? 'None' : 'Lax', secure: isProduction });
 
         return res.json({ message: 'Logged out successfully' });
     } catch (err) {
@@ -82,7 +84,7 @@ export async function refresh(req, res) {
         if (!user || user.refreshToken !== refresh_token) return res.status(403).json({ message: 'Invalid refresh token' });
 
         const newAccessToken = generateAccessToken(user);
-        res.cookie('access_token', newAccessToken, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 15 * 60 * 1000 });
+        res.cookie('access_token', newAccessToken, { httpOnly: true, sameSite: isProduction ? 'None' : 'Lax', secure: isProduction, maxAge: 15 * 60 * 1000 });
 
         return res.json({ message: 'Access token refreshed' });
     } catch (err) {

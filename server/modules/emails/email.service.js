@@ -1,5 +1,5 @@
 import transporter from '../../config/mail.js';
-import { emailVerificationTemplate, signupWelcomeTemplate } from './templates/auth.templates.js';
+import { emailVerificationTemplate, passwordResetSuccessTemplate, passwordResetTemplate, signupWelcomeTemplate } from './templates/auth.templates.js';
 import { bookingCancellationTemplate, bookingConfirmationTemplate, paymentFailureTemplate, paymentSuccessTemplate } from './templates/booking.templates.js';
 
 const FROM = `"Ezy Motel" <no-reply@ezymotel.in>`;
@@ -22,6 +22,28 @@ export async function sendEmailVerification(to, user, verifyUrl) {
         from: FROM,
         to,
         subject: "Verify your email | Ezy Motel",
+        html,
+    });
+}
+
+export async function sendPasswordResetEmail(to, resetUrl) {
+    const html = passwordResetTemplate(resetUrl);
+
+    await transporter.sendMail({
+        from: FROM,
+        to,
+        subject: "Reset your password | Ezy Motel",
+        html,
+    });
+}
+
+export async function sendPasswordResetSuccessEmail(to, user) {
+    const html = passwordResetSuccessTemplate(user);
+
+    await transporter.sendMail({
+        from: FROM,
+        to,
+        subject: "Your password was changed | Ezy Motel",
         html,
     });
 }
