@@ -119,12 +119,16 @@ Make sure you have the following installed:
 ```env
 DATABASE_URL=postgresql://username:password@localhost:5432/hotel_booking
 JWT_SECRET=your_jwt_secret
+JWT_REFRESH_SECRET==your_jwt_refresh_secret
 
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=admin123
 
 UNSPLASH_ACCESS_KEY=your_unsplash_key
 GEMINI_API_KEY=your_gemini_key
+
+CLIENT_URL=your_client_url(e.g. http://localhost:5173)
+NODE_ENV=Set to "development" for local development or "production" for deployed environments.
 ```
 
 ---
