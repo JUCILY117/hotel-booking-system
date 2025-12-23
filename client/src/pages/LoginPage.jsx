@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
@@ -14,12 +14,15 @@ const slides = [
 export default function LoginPage() {
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const toast = useToast();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [activeSlide, setActiveSlide] = useState(0);
+
+    const from = location.state?.from || "/";
 
     useEffect(() => {
         const id = setInterval(() => setActiveSlide(i => (i + 1) % slides.length), 4500);
@@ -33,7 +36,7 @@ export default function LoginPage() {
         try {
             await login(email, password);
             toast.success("Logged in successfully!");
-            navigate("/");
+            navigate(from, { replace: true });
         } catch (err) {
             toast.error("Invalid email or password");
         } finally {
@@ -96,7 +99,12 @@ export default function LoginPage() {
 
                         <Field icon={Mail} placeholder="Email" value={email} onChange={setEmail} type="email" />
                         <PasswordField icon={Lock} placeholder="••••••••" value={password} onChange={setPassword} />
-
+                        <Link
+                            to="/forgot-password"
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline self-end"
+                        >
+                            Forgot password?
+                        </Link>
                         <button
                             type="submit"
                             disabled={loading}

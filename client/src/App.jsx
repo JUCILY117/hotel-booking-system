@@ -12,11 +12,14 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminHotelsPage from "./pages/admin/AdminHotelsPage";
 import AdminPaymentsPage from "./pages/admin/AdminPaymentsPage";
 import AdminRoomsPage from "./pages/admin/AdminRoomsPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import HotelDetailPage from "./pages/HotelDetailPage";
 import HotelsPage from "./pages/HotelsPage";
 import LoginPage from "./pages/LoginPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import PaymentPage from "./pages/PaymentPage";
 import RegisterPage from "./pages/RegisterPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 export default function App() {
     return (
@@ -26,7 +29,18 @@ export default function App() {
                 <Route path="/hotels/:id" element={<HotelDetailPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
-                <Route path="/payment/:bookingId" element={<PaymentPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+                <Route
+                    path="/payment/:bookingId"
+                    element={
+                        <ProtectedRoute>
+                            <PaymentPage />
+                        </ProtectedRoute>
+                    }
+                />
+
                 <Route
                     path="/account"
                     element={

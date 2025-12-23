@@ -6,7 +6,9 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
 
     if (loading) return <div>Loading...</div>;
 
-    if (!user) return <Navigate to="/login" />;
+    if (!user) {
+        return <Navigate to="/login" state={{ from: window.location.pathname }} replace />;
+    }
 
     if (adminOnly && user.role !== "ADMIN") {
         return <Navigate to="/" />;
