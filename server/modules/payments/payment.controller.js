@@ -4,6 +4,8 @@ import {
     sendPaymentSuccess
 } from '../emails/email.service.js';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export async function makePayment(req, res) {
     try {
         const userId = req.user.id;
@@ -46,7 +48,9 @@ export async function makePayment(req, res) {
         });
 
         if (!isSuccess) {
-            await sendPaymentFailure(booking.user.email, booking);
+            if (!isProduction) {
+                await sendPaymentFailure(booking.user.email, booking);
+            }
             return res.status(402).json({
                 message: 'Payment failed',
                 payment,
@@ -66,11 +70,13 @@ export async function makePayment(req, res) {
             },
         });
 
-        await sendPaymentSuccess(
-            confirmedBooking.user.email,
-            confirmedBooking,
-            payment
-        );
+        if (!isProduction) {
+            await sendPaymentSuccess(
+                confirmedBooking.user.email,
+                confirmedBooking,
+                payment
+            );
+        }
 
         return res.json({
             message: 'Payment successful',

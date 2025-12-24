@@ -22,7 +22,9 @@ export async function register(req, res) {
             data: { name, email, passwordHash },
         });
 
-        await sendSignupWelcome(email, user);
+        if (!isProduction) {
+            await sendSignupWelcome(email, user);
+        }
         return res.status(201).json({ message: 'User registered successfully' });
     } catch (err) {
         console.error('Register error:', err);

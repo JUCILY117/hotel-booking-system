@@ -1,6 +1,8 @@
 import prisma from '../../config/prisma.js';
 import { sendBookingCancellation, sendBookingConfirmation } from '../emails/email.service.js';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export async function createBooking(req, res) {
     try {
         const userId = req.user.id;
@@ -61,7 +63,9 @@ export async function createBooking(req, res) {
             },
         });
 
-        await sendBookingConfirmation(booking.user.email, booking);
+        if (!isProduction) {
+            await sendBookingConfirmation(booking.user.email, booking);
+        }
 
         return res.status(201).json(booking);
     } catch (err) {
@@ -125,8 +129,9 @@ export async function cancelBooking(req, res) {
                 user: true,
             },
         });
-
-        await sendBookingCancellation(updatedBooking.user.email, updatedBooking);
+        if (!isProduction) {
+            await sendBookingCancellation(updatedBooking.user.email, updatedBooking);
+        }
 
         return res.json({ message: 'Booking cancelled' });
     } catch (err) {
