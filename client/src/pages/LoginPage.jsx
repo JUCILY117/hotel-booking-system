@@ -6,9 +6,9 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
 const slides = [
-    { image: "/images/hotel-4.jpg", title: "Welcome back", subtitle: "Login to continue your bookings" },
-    { image: "/images/hotel-5.jpg", title: "Plan your stay", subtitle: "Check your reservations quickly" },
-    { image: "/images/hotel-6.jpg", title: "Comfort at your fingertips", subtitle: "Access your account anytime" },
+    { image: "/images/hotel-4.webp", title: "Welcome back", subtitle: "Login to continue your bookings" },
+    { image: "/images/hotel-5.webp", title: "Plan your stay", subtitle: "Check your reservations quickly" },
+    { image: "/images/hotel-6.webp", title: "Comfort at your fingertips", subtitle: "Access your account anytime" },
 ];
 
 export default function LoginPage() {

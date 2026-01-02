@@ -7,17 +7,17 @@ import { useToast } from "../context/ToastContext";
 
 const slides = [
     {
-        image: "/images/hotel-1.jpg",
+        image: "/images/hotel-1.webp",
         title: "Book stays effortlessly",
         subtitle: "Discover hotels in seconds",
     },
     {
-        image: "/images/hotel-2.jpg",
+        image: "/images/hotel-2.webp",
         title: "Smart & secure bookings",
         subtitle: "Your comfort, our priority",
     },
     {
-        image: "/images/hotel-3.jpg",
+        image: "/images/hotel-3.webp",
         title: "Travel made simple",
         subtitle: "Plan, book, relax",
     },
