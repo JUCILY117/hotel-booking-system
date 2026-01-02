@@ -257,7 +257,7 @@ export default function PaymentPage() {
                         <div className="text-gray-500 dark:text-gray-400">
                             Use demo cards for testing payments.{" "}
                             <a
-                                href="https://github.com/JUCILY117/hotel-booking-system#test-cards-mock-payments"
+                                href="https://github.com/JUCILY117/hotel-booking-system?tab=readme-ov-file#-test-cards-mock-payments"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 dark:text-blue-400 hover:underline"
